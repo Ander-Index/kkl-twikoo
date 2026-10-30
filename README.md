@@ -87,3 +87,14 @@ netlify/functions/twikoo.mjs
 ## 更新
 
 直接修改 `package.json` 中的版本号
+
+## 本站通知模板定制
+
+`netlify/functions/notify.mjs` 在 NapCat 群消息发送前移除评论人邮箱和 IP，并在标题后保留一个空行。Twikoo 的 `PUSHOO_CHANNEL` 保持 `onebot`，`PUSHOO_TOKEN` 指向该函数，不直接指向 NapCat。
+
+函数使用以下 Netlify 环境变量，密钥不要写入仓库：
+
+- `NAPCAT_ORIGIN`：NapCat HTTP 服务地址；
+- `NAPCAT_TOKEN`：NapCat 访问令牌；
+- `NAPCAT_GROUP_ID`：接收通知的群号；
+- `NOTIFY_TOKEN`：Twikoo 调用 `notify` 函数时使用的独立访问令牌。
