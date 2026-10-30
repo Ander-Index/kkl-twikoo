@@ -14,14 +14,18 @@ function cleanMessage(value) {
   return message.trim()
 }
 
+const NAPCAT_ORIGIN = "http://192.3.216.192:61001"
+
 export default async (request) => {
   if (request.method !== "POST") return response(405, { retcode: 405, message: "Method Not Allowed" })
 
   const url = new URL(request.url)
   const authorization = request.headers.get("authorization") || ""
   const credential = url.searchParams.get("access_token") || authorization.replace(/^Bearer\s+/i, "")
-  if (!process.env.NOTIFY_TOKEN || credential !== process.env.NOTIFY_TOKEN) {
-    return response(401, { retcode: 401, message: "Unauthorized" })
+  const groupId = url.searchParams.get("target_group")
+  if (!credential) return response(401, { retcode: 401, message: "Unauthorized" })
+  if (!groupId || !/^\d+$/.test(groupId)) {
+    return response(400, { retcode: 400, message: "Invalid target_group" })
   }
 
   let body
@@ -34,15 +38,8 @@ export default async (request) => {
     return response(400, { retcode: 400, message: "Missing message" })
   }
 
-  const origin = (process.env.NAPCAT_ORIGIN || "").replace(/\/+$/, "")
-  const token = process.env.NAPCAT_TOKEN
-  const groupId = process.env.NAPCAT_GROUP_ID
-  if (!origin || !token || !groupId) {
-    return response(500, { retcode: 500, message: "Notification service is not configured" })
-  }
-
   try {
-    const upstream = await fetch(`${origin}/send_group_msg?group_id=${encodeURIComponent(groupId)}&access_token=${encodeURIComponent(token)}`, {
+    const upstream = await fetch(`${NAPCAT_ORIGIN}/send_group_msg?group_id=${encodeURIComponent(groupId)}&access_token=${encodeURIComponent(credential)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ group_id: Number(groupId), message: cleanMessage(body.message) }),
